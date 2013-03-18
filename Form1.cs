@@ -40,7 +40,13 @@ namespace JSON_to_dict
         private void button1_Click(object sender, EventArgs e)
         {
             int key = test3.IndexOf('"');
-            MessageBox.Show(test3.Substring(key+1));
+            JSONParser jsn = new JSONParser();
+            Dictionary<string, string> dict = jsn.parse(test2);
+            foreach (KeyValuePair<string, string> a in dict)
+            {
+                //MessageBox.Show(a.Key + " => " + a.Value);
+                listBox1.Items.Add(a.Key + " => " + a.Value);
+            }
         }
     }
 }

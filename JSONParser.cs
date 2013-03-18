@@ -7,111 +7,135 @@ namespace JSON_to_dict
 {
     class JSONParser
     {
-        enum states 
-        { 
-            start
-            key,
-            val,
-            val_string,
-            val_int,
-            val_bool,
-            val_array,
-        };
+        private string json;
+        private int pos;
+        private string key;
+        private Dictionary<string, string> Result;
+
+        private void Init(string val)
+        {
+            json = val;
+            pos = 0;
+            Result = new Dictionary<string, string>();
+        }
+
+        private void start()
+        {
+            key = "";
+        }
+
+        #region Поиски
+
+        private bool findKey()
+        {
+            while (pos < json.Length)
+            {
+                if (json[pos] == '"') // нашли начало ключа
+                {
+                    while (json[++pos] != '"')
+                    {
+                        key = key + json[pos]; // записываем название ключа
+                    }
+                    ++pos; // переходим с кавычки на след символ
+                    return true;
+                }
+                ++pos;
+            }
+            return false;
+        }
+
+        private void findVal()
+        {
+            while (pos < json.Length)
+            {
+                if (isNum())
+                {
+                    findNum();
+                    break;
+                }
+                switch (json[pos])
+                {
+                    case '"':
+                        findStr();
+                        return;
+                    case 't':
+                        Result.Add(key, "bool");
+                        pos += 4;
+                        return;
+                    case 'f':
+                        Result.Add(key, "false");
+                        pos += 5;
+                        return;
+
+                    /* обработка массива
+                    case '[':
+                        break;
+                     * */
+                    default: ++pos; break;
+                }
+            }
+        }
+
+        private void findNum()
+        {
+            string val = "" + json[pos++];
+            while (isNum())
+            {
+                val += json[pos++];
+            }
+            Result.Add(key, val);
+        }
+
+        // Обработка строк
+        private void  findStr()
+        {
+            string val = "";
+            while (++pos < json.Length)
+            {
+                if (json[pos] != '"')
+                {
+                    val += json[pos];
+                }
+                else
+                {
+                    if (json[pos - 1] == '\\')
+                    {
+                        val += json[pos];
+                    }
+                    else
+                    {
+                        ++pos;    
+                        break;
+                    }
+                }
+            }
+            Result.Add(key, val);
+        }
+
+        #endregion
+
+        private bool isNum()
+        {
+            if (((json[pos] - '0') >= 0) &&
+                ((json[pos] - '0') <= 9))
+                return true;
+            else
+                if (json[pos] == '.')
+                    return true;
+            return false;
+        }
 
         public Dictionary<string, string> parse(string json)
         {
-            Dictionary<string, string> result = new Dictionary<string, string>();
-
-            states state = states.start; // состояния
-
-            bool flag = false; // флаг записи
-
-            string key ="";
-            string val ="";
-
-            foreach (char ch in json)
-            { 
-                switch (state)
-                {
-                    case states.start:
-                        flag = false; 
-                        key ="";
-                        val ="";
-                        goto case states.key;
-
-                    #region Поиск ключа
-
-                    case states.key: 
-                        if (flag) // если записываем
-                        {
-                            if (ch != '"') // пишем пока не закроется "
-                            {
-                                key = key + ch;
-                            }
-                            else
-                            {
-                                // запрещаем запись и устанавливаем 
-                                // состояние в поиск значения
-                                state = states.val;
-                                flag = false;
-                            }
-                        }
-                        else
-                        {
-                            if (ch == '"') // нашли начало ключа
-                            {
-                                flag = true;
-                            }
-                        }
-                        break;
-
-                    #endregion
-
-                    #region Поиск значения
-
-                    case states.val:
-                        if ((ch - '0' >= 0) &&
-                            ((ch - '0' <= '9')))
-                        {
-                            state = states.val_int;
-                            val = val + ch;
-                        }
-                        switch (ch)
-                        {
-                            case '"':
-                                state = states.val_string;
-                                break;
-                            case '[':
-                                state = states.val_array;
-                                break;
-                            case 'b':
-                                state = states.val_bool;
-                                flag = true;
-                                break;
-                            case 'f':
-                                state = states.val_bool;
-                                flag = false;
-                                break;
-                        }
-                        break;
-
-                    #endregion
-
-                    case states.val_bool:
-                        if (flag)
-                            result.Add(key, "true");
-                        else
-                            result.Add(key, "false");
-                        state = states.start;
-                        break;
-
-                    case states.val_string:
-
-                        break;
-                }
+            Init(json);
+            start();
+            while (findKey())
+            {
+                findVal();
+                start();
             }
 
-            return result;
+            return Result;
         }
     }
 }
