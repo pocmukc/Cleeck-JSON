@@ -41,7 +41,7 @@ namespace JSON_to_dict
         {
             int key = test3.IndexOf('"');
             JSONParser jsn = new JSONParser();
-            Dictionary<string, string> dict = jsn.parse(test2);
+            Dictionary<string, string> dict = jsn.parse(test1);
             foreach (KeyValuePair<string, string> a in dict)
             {
                 //MessageBox.Show(a.Key + " => " + a.Value);

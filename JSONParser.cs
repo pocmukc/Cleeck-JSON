@@ -12,6 +12,19 @@ namespace JSON_to_dict
         private string key;
         private Dictionary<string, string> Result;
 
+        public Dictionary<string, string> parse(string json)
+        {
+            Init(json);
+            start();
+            while (findKey())
+            {
+                findVal();
+                start();
+            }
+
+            return Result;
+        }
+
         private void Init(string val)
         {
             json = val;
@@ -24,25 +37,7 @@ namespace JSON_to_dict
             key = "";
         }
 
-        #region Поиски
-
-        private bool findKey()
-        {
-            while (pos < json.Length)
-            {
-                if (json[pos] == '"') // нашли начало ключа
-                {
-                    while (json[++pos] != '"')
-                    {
-                        key = key + json[pos]; // записываем название ключа
-                    }
-                    ++pos; // переходим с кавычки на след символ
-                    return true;
-                }
-                ++pos;
-            }
-            return false;
-        }
+        #region Поиски findBla-bla
 
         private void findVal()
         {
@@ -67,14 +62,32 @@ namespace JSON_to_dict
                         pos += 5;
                         return;
 
-                    /* обработка массива
                     case '[':
-                        break;
-                     * */
+                        findArr();
+                        return;
                     default: ++pos; break;
                 }
             }
         }
+
+        private bool findKey()
+        {
+            while (pos < json.Length)
+            {
+                if (json[pos] == '"') // нашли начало ключа
+                {
+                    while (json[++pos] != '"')
+                    {
+                        key = key + json[pos]; // записываем название ключа
+                    }
+                    ++pos; // переходим с кавычки на след символ
+                    return true;
+                }
+                ++pos;
+            }
+            return false;
+        }
+
 
         private void findNum()
         {
@@ -82,6 +95,16 @@ namespace JSON_to_dict
             while (isNum())
             {
                 val += json[pos++];
+            }
+            Result.Add(key, val);
+        }
+
+        private void findArr()
+        {
+            string val = "";
+            while (json[++pos] != ']')
+            {
+                val += json[pos];
             }
             Result.Add(key, val);
         }
@@ -114,6 +137,8 @@ namespace JSON_to_dict
 
         #endregion
 
+        // Низкоуровневые проверки
+
         private bool isNum()
         {
             if (((json[pos] - '0') >= 0) &&
@@ -123,19 +148,6 @@ namespace JSON_to_dict
                 if (json[pos] == '.')
                     return true;
             return false;
-        }
-
-        public Dictionary<string, string> parse(string json)
-        {
-            Init(json);
-            start();
-            while (findKey())
-            {
-                findVal();
-                start();
-            }
-
-            return Result;
         }
     }
 }
